@@ -23,6 +23,9 @@ import { PsychologistResponse, UrgencyLevel } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   psychologist_notes: z.string().min(1, "Notes are required"),
@@ -42,6 +45,8 @@ export function ReportResponseForm({
   reportId,
   existingResponse,
 }: ReportResponseFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,8 +63,48 @@ export function ReportResponseForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, we would send this to the API
-    console.log(values);
+    try {
+      setIsSubmitting(true);
+
+      const method = existingResponse ? "PUT" : "POST";
+      const response = await fetch(`/api/reports/${reportId}/response`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          psychologist_notes: values.psychologist_notes,
+          recommendations: {
+            immediate_actions: values.immediate_actions,
+            therapeutic_activities: values.therapeutic_activities,
+            follow_up_timeline: values.follow_up_timeline,
+            referral_suggestions: values.referral_suggestions,
+          },
+          urgency_level: values.urgency_level,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit response");
+      }
+
+      toast.success(
+        existingResponse ? "Response Updated" : "Response Submitted",
+        {
+          description: existingResponse
+            ? "Your response has been updated successfully."
+            : "Your response has been submitted successfully.",
+        }
+      );
+
+      // In a real app, we might want to redirect or refresh the data
+    } catch (error) {
+      toast.error("Error", {
+        description: "Failed to submit response. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -75,6 +120,7 @@ export function ReportResponseForm({
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={isSubmitting}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -103,6 +149,7 @@ export function ReportResponseForm({
                   <Textarea
                     placeholder="Enter your professional assessment..."
                     className="min-h-[100px]"
+                    disabled={isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -120,6 +167,7 @@ export function ReportResponseForm({
                 <FormControl>
                   <Textarea
                     placeholder="List immediate actions needed..."
+                    disabled={isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -137,6 +185,7 @@ export function ReportResponseForm({
                 <FormControl>
                   <Textarea
                     placeholder="Suggest therapeutic activities..."
+                    disabled={isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -154,6 +203,7 @@ export function ReportResponseForm({
                 <FormControl>
                   <Input
                     placeholder="e.g., Weekly check-ins for first month"
+                    disabled={isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -171,6 +221,7 @@ export function ReportResponseForm({
                 <FormControl>
                   <Textarea
                     placeholder="Suggest professional referrals if needed..."
+                    disabled={isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -179,8 +230,15 @@ export function ReportResponseForm({
             )}
           />
 
-          <Button type="submit" className="w-full">
-            {existingResponse ? "Update Response" : "Submit Response"}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {isSubmitting
+              ? "Submitting..."
+              : existingResponse
+              ? "Update Response"
+              : "Submit Response"}
           </Button>
         </form>
       </Form>
