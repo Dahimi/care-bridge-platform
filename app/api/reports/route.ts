@@ -1,18 +1,52 @@
 import { NextResponse } from "next/server";
-import { mockReports } from "@/data/mock-data";
 import { Report } from "@/types";
+import fs from "fs";
+import path from "path";
+import { getAllReports } from "@/lib/db";
+
+const REPORTS_FILE = path.join(process.cwd(), "data", "db", "reports.json");
 
 export async function GET() {
-  return NextResponse.json(mockReports);
+  try {
+    const reports = getAllReports();
+    return NextResponse.json(reports);
+  } catch (error) {
+    console.error("Failed to fetch reports:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch reports" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
-  const report: Report = await request.json();
-  
-  // In a real app, we would save this to a database
-  // For now, we'll just return the report with a success message
-  return NextResponse.json({ 
-    message: "Report created successfully", 
-    report 
-  }, { status: 201 });
+  try {
+    const report: Report = await request.json();
+    
+    // Validate mobile_app_id
+    if (!report.mobile_app_id) {
+      return NextResponse.json(
+        { error: "mobile_app_id is required" },
+        { status: 400 }
+      );
+    }
+
+    // Generate a unique ID for the report
+    report.id = `report_${Date.now()}`;
+    report.created_at = new Date().toISOString();
+    report.status = "new";
+
+    // Save the report
+    const reports = getAllReports();
+    reports.push(report);
+    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
+
+    return NextResponse.json(report, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create report:", error);
+    return NextResponse.json(
+      { error: "Failed to create report" },
+      { status: 500 }
+    );
+  }
 } 

@@ -1,4 +1,3 @@
-import { mockReports, mockResponses } from "@/data/mock-data";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -7,6 +6,8 @@ import { format } from "date-fns";
 import { AlertTriangle, Calendar, MapPin, User } from "lucide-react";
 import { ReportResponseForm } from "@/components/reports/response-form";
 import { MediaGallery } from "@/components/reports/media-gallery";
+import { getAllReports } from "@/lib/db";
+import { getResponsesByReportId } from "@/lib/db";
 
 interface ReportPageProps {
   params: {
@@ -15,8 +16,10 @@ interface ReportPageProps {
 }
 
 export default function ReportPage({ params }: ReportPageProps) {
-  const report = mockReports.find((r) => r.id === params.id);
-  const response = mockResponses.find((r) => r.report_id === params.id);
+  const reports = getAllReports();
+  const report = reports.find((r) => r.id === params.id);
+  const responses = getResponsesByReportId(params.id);
+  const response = responses[0]; // Get the latest response
 
   if (!report) {
     notFound();

@@ -1,7 +1,6 @@
 "use client";
 
 import { ReportsTable } from "@/components/dashboard/reports-table";
-import { mockReports } from "@/data/mock-data";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,15 +10,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Report } from "@/types";
 
 export default function ReportsPage() {
+  const [reports, setReports] = useState<Report[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredReports = mockReports.filter((report) => {
+  useEffect(() => {
+    async function fetchReports() {
+      try {
+        const response = await fetch("/api/reports");
+        if (!response.ok) {
+          throw new Error("Failed to fetch reports");
+        }
+        const data = await response.json();
+        setReports(data);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchReports();
+  }, []);
+
+  const filteredReports = reports.filter((report) => {
     // Search filter
     const searchMatch =
       searchQuery === "" ||
@@ -51,6 +71,18 @@ export default function ReportsPage() {
 
     return searchMatch && statusMatch && severityMatch;
   });
+
+  if (isLoading) {
+    return (
+      <main className="container mx-auto py-6 space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 w-48 bg-muted rounded mb-6"></div>
+          <div className="h-32 bg-muted rounded mb-6"></div>
+          <div className="h-96 bg-muted rounded"></div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="container mx-auto py-6 space-y-6">
