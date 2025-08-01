@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -9,12 +11,15 @@ import {
 } from "@/components/ui/table";
 import { Report } from "@/types";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 
 interface ReportsTableProps {
   reports: Report[];
 }
 
 export function ReportsTable({ reports }: ReportsTableProps) {
+  const router = useRouter();
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -30,7 +35,11 @@ export function ReportsTable({ reports }: ReportsTableProps) {
         </TableHeader>
         <TableBody>
           {reports.map((report) => (
-            <TableRow key={report.id}>
+            <TableRow
+              key={report.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => router.push(`/reports/${report.id}`)}
+            >
               <TableCell className="font-medium">{report.id}</TableCell>
               <TableCell>{report.child_info.location}</TableCell>
               <TableCell>{report.child_info.age}</TableCell>
