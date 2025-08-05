@@ -122,5 +122,32 @@
     "id": "report_1754091939884",
     "created_at": "2025-08-01T23:45:39.884Z",
     "status": "new"
+  },
+  {
+    "child_info": {
+      "age": 8,
+      "gender": "female",
+      "location": "Gaza"
+    },
+    "assessment_data": {
+      "parent_observations": "Child shows signs of anxiety and has trouble sleeping",
+      "ai_analysis": "Initial analysis indicates symptoms consistent with acute stress response",
+      "severity_score": 7,
+      "risk_indicators": [
+        "sleep disturbance",
+        "heightened anxiety",
+        "noise sensitivity"
+      ],
+      "cultural_context": "Recent exposure to conflict zone"
+    },
+    "media_attachments": {
+      "drawings": [],
+      "audio_recordings": [],
+      "photos": []
+    },
+    "mobile_app_id": "mobile_001",
+    "id": "report_1754407516189",
+    "created_at": "2025-08-05T15:25:16.190Z",
+    "status": "new"
   }
 ]

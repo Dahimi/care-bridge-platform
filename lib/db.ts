@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { PsychologistResponse, Report } from "@/types";
+import { PsychologistResponse, Report, ReportStatus } from "@/types";
 
 const DB_DIR = path.join(process.cwd(), "data", "db");
 
@@ -62,4 +62,22 @@ export function updateResponse(
   responses[index] = { ...responses[index], ...updates };
   fs.writeFileSync(RESPONSES_FILE, JSON.stringify(responses, null, 2));
   return responses[index];
+}
+
+export function updateReportStatus(reportId: string, status: ReportStatus) {
+  const reports = getAllReports();
+  const index = reports.findIndex((r) => r.id === reportId);
+
+  if (index === -1) {
+    throw new Error("Report not found");
+  }
+
+  reports[index].status = status;
+  fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
+  return reports[index];
+}
+
+export function getReportById(reportId: string): Report | undefined {
+  const reports = getAllReports();
+  return reports.find((r) => r.id === reportId);
 } 

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { mockReports, mockResponses } from "@/data/mock-data";
+import { getResponsesByReportId, getReportById, updateReportStatus } from "@/lib/db";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const report = mockReports.find((r) => r.id === params.id);
-  const responses = mockResponses.filter((r) => r.report_id === params.id);
+  const { id } = await params;
+  const report = getReportById(id);
+  const responses = getResponsesByReportId(id);
 
   if (!report) {
     return NextResponse.json(
@@ -20,22 +21,28 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const updates = await request.json();
-  const reportIndex = mockReports.findIndex((r) => r.id === params.id);
+  try {
+    const { id } = await params;
+    const updates = await request.json();
 
-  if (reportIndex === -1) {
+    // If updating status
+    if (updates.status) {
+      const updatedReport = updateReportStatus(id, updates.status);
+      return NextResponse.json(updatedReport);
+    }
+
+    // For other updates, we would handle them here
+    return NextResponse.json({ 
+      message: "Report updated successfully",
+      updates
+    });
+  } catch (error) {
+    console.error("Failed to update report:", error);
     return NextResponse.json(
-      { error: "Report not found" },
-      { status: 404 }
+      { error: "Failed to update report" },
+      { status: 500 }
     );
   }
-
-  // In a real app, we would update the database
-  // For now, we'll just return success
-  return NextResponse.json({ 
-    message: "Report updated successfully",
-    updates
-  });
 } 

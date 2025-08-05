@@ -6,19 +6,21 @@ import { format } from "date-fns";
 import { AlertTriangle, Calendar, MapPin, User } from "lucide-react";
 import { ReportResponseForm } from "@/components/reports/response-form";
 import { MediaGallery } from "@/components/reports/media-gallery";
+import { StatusUpdate } from "@/components/reports/status-update";
 import { getAllReports } from "@/lib/db";
 import { getResponsesByReportId } from "@/lib/db";
 
 interface ReportPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ReportPage({ params }: ReportPageProps) {
+export default async function ReportPage({ params }: ReportPageProps) {
+  const { id } = await params;
   const reports = getAllReports();
-  const report = reports.find((r) => r.id === params.id);
-  const responses = getResponsesByReportId(params.id);
+  const report = reports.find((r) => r.id === id);
+  const responses = getResponsesByReportId(id);
   const response = responses[0]; // Get the latest response
 
   if (!report) {
@@ -92,6 +94,7 @@ export default function ReportPage({ params }: ReportPageProps) {
           <TabsTrigger value="assessment">Assessment</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="response">Response</TabsTrigger>
+          <TabsTrigger value="status">Status</TabsTrigger>
         </TabsList>
 
         <TabsContent value="assessment" className="space-y-4">
@@ -134,6 +137,10 @@ export default function ReportPage({ params }: ReportPageProps) {
 
         <TabsContent value="response">
           <ReportResponseForm reportId={report.id} existingResponse={response} />
+        </TabsContent>
+
+        <TabsContent value="status">
+          <StatusUpdate reportId={report.id} currentStatus={report.status} />
         </TabsContent>
       </Tabs>
     </main>

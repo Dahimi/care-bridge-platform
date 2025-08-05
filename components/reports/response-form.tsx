@@ -26,6 +26,7 @@ import * as z from "zod";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   psychologist_notes: z.string().min(1, "Notes are required"),
@@ -46,6 +47,7 @@ export function ReportResponseForm({
   existingResponse,
 }: ReportResponseFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,6 +63,21 @@ export function ReportResponseForm({
       urgency_level: (existingResponse?.urgency_level as UrgencyLevel) || "low",
     },
   });
+
+  // Function to update report status
+  const updateReportStatus = async (status: string) => {
+    try {
+      await fetch(`/api/reports/${reportId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+    } catch (error) {
+      console.error("Failed to update report status:", error);
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -88,16 +105,20 @@ export function ReportResponseForm({
         throw new Error("Failed to submit response");
       }
 
+      // Update report status to completed when response is submitted
+      await updateReportStatus("completed");
+
       toast.success(
         existingResponse ? "Response Updated" : "Response Submitted",
         {
           description: existingResponse
-            ? "Your response has been updated successfully."
-            : "Your response has been submitted successfully.",
+            ? "Your response has been updated successfully. Report marked as completed."
+            : "Your response has been submitted successfully. Report marked as completed.",
         }
       );
 
-      // In a real app, we might want to redirect or refresh the data
+      // Refresh the page to show updated status
+      router.refresh();
     } catch (error) {
       toast.error("Error", {
         description: "Failed to submit response. Please try again.",
@@ -107,141 +128,170 @@ export function ReportResponseForm({
     }
   }
 
+  // Function to mark report as in review when user starts working
+  const handleStartReview = async () => {
+    try {
+      await updateReportStatus("in_review");
+      toast.success("Report marked as in review");
+      router.refresh();
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
+  };
+
   return (
-    <Card className="p-6">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="urgency_level"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Urgency Level</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isSubmitting}
-                >
+    <div className="space-y-4">
+      {!existingResponse && (
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium">Start Working on This Report</h3>
+              <p className="text-sm text-muted-foreground">
+                Mark this report as "in review" to let others know you're working on it.
+              </p>
+            </div>
+            <Button onClick={handleStartReview} variant="outline">
+              Start Review
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      <Card className="p-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="urgency_level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Urgency Level</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isSubmitting}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select urgency level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="psychologist_notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Professional Assessment Notes</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select urgency level" />
-                    </SelectTrigger>
+                    <Textarea
+                      placeholder="Enter your professional assessment..."
+                      className="min-h-[100px]"
+                      disabled={isSubmitting}
+                      {...field}
+                    />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="psychologist_notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Professional Assessment Notes</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Enter your professional assessment..."
-                    className="min-h-[100px]"
-                    disabled={isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="immediate_actions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Immediate Actions Required</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="List immediate actions needed..."
+                      disabled={isSubmitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="immediate_actions"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Immediate Actions Required</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="List immediate actions needed..."
-                    disabled={isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="therapeutic_activities"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recommended Therapeutic Activities</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Suggest therapeutic activities..."
+                      disabled={isSubmitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="therapeutic_activities"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Recommended Therapeutic Activities</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Suggest therapeutic activities..."
-                    disabled={isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="follow_up_timeline"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Follow-up Timeline</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g., Weekly check-ins for first month"
+                      disabled={isSubmitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="follow_up_timeline"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Follow-up Timeline</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="e.g., Weekly check-ins for first month"
-                    disabled={isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="referral_suggestions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Referral Suggestions (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Suggest professional referrals if needed..."
+                      disabled={isSubmitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="referral_suggestions"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Referral Suggestions (Optional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Suggest professional referrals if needed..."
-                    disabled={isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            {isSubmitting
-              ? "Submitting..."
-              : existingResponse
-              ? "Update Response"
-              : "Submit Response"}
-          </Button>
-        </form>
-      </Form>
-    </Card>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {isSubmitting
+                ? "Submitting..."
+                : existingResponse
+                ? "Update Response"
+                : "Submit Response"}
+            </Button>
+          </form>
+        </Form>
+      </Card>
+    </div>
   );
 } 
