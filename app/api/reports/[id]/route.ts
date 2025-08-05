@@ -1,22 +1,30 @@
 import { NextResponse } from "next/server";
-import { getResponsesByReportId, getReportById, updateReportStatus } from "@/lib/db";
+import { getResponsesByReportId, getReportById, updateReportStatus } from "@/lib/supabase-db";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const report = getReportById(id);
-  const responses = getResponsesByReportId(id);
+  try {
+    const { id } = await params;
+    const report = await getReportById(id);
+    const responses = await getResponsesByReportId(id);
 
-  if (!report) {
+    if (!report) {
+      return NextResponse.json(
+        { error: "Report not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ report, responses });
+  } catch (error) {
+    console.error("Failed to fetch report:", error);
     return NextResponse.json(
-      { error: "Report not found" },
-      { status: 404 }
+      { error: "Failed to fetch report" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({ report, responses });
 }
 
 export async function PUT(
@@ -29,7 +37,7 @@ export async function PUT(
 
     // If updating status
     if (updates.status) {
-      const updatedReport = updateReportStatus(id, updates.status);
+      const updatedReport = await updateReportStatus(id, updates.status);
       return NextResponse.json(updatedReport);
     }
 

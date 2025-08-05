@@ -7,8 +7,7 @@ import { AlertTriangle, Calendar, MapPin, User } from "lucide-react";
 import { ReportResponseForm } from "@/components/reports/response-form";
 import { MediaGallery } from "@/components/reports/media-gallery";
 import { StatusUpdate } from "@/components/reports/status-update";
-import { getAllReports } from "@/lib/db";
-import { getResponsesByReportId } from "@/lib/db";
+import { getReportById, getResponsesByReportId } from "@/lib/supabase-db";
 
 interface ReportPageProps {
   params: Promise<{
@@ -18,9 +17,8 @@ interface ReportPageProps {
 
 export default async function ReportPage({ params }: ReportPageProps) {
   const { id } = await params;
-  const reports = getAllReports();
-  const report = reports.find((r) => r.id === id);
-  const responses = getResponsesByReportId(id);
+  const report = await getReportById(id);
+  const responses = await getResponsesByReportId(id);
   const response = responses[0]; // Get the latest response
 
   if (!report) {

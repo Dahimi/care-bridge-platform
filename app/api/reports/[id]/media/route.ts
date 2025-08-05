@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { getAllReports } from "@/lib/db";
+import { getReportById, updateReportMedia } from "@/lib/supabase-db";
 
 const MEDIA_DIR = path.join(process.cwd(), "public", "media");
-const REPORTS_FILE = path.join(process.cwd(), "data", "db", "reports.json");
 
 // Ensure media directory exists
 if (!fs.existsSync(MEDIA_DIR)) {
@@ -13,9 +12,10 @@ if (!fs.existsSync(MEDIA_DIR)) {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const formData = await request.formData();
     const files = formData.getAll("files");
     const type = formData.get("type") as "drawings" | "photos" | "audio_recordings";
@@ -35,10 +35,9 @@ export async function POST(
     }
 
     // Find the report
-    const reports = getAllReports();
-    const reportIndex = reports.findIndex((r) => r.id === params.id);
+    const report = await getReportById(id);
 
-    if (reportIndex === -1) {
+    if (!report) {
       return NextResponse.json(
         { error: "Report not found" },
         { status: 404 }
@@ -55,7 +54,7 @@ export async function POST(
 
       // Create a unique filename
       const timestamp = Date.now();
-      const filename = `${params.id}_${timestamp}_${file.name}`;
+      const filename = `${id}_${timestamp}_${file.name}`;
       const mediaPath = path.join(MEDIA_DIR, filename);
       
       // Convert File to Buffer and save
@@ -68,14 +67,8 @@ export async function POST(
       mediaUrls.push(mediaUrl);
     }
 
-    // Update report with new media URLs
-    reports[reportIndex].media_attachments[type] = [
-      ...reports[reportIndex].media_attachments[type],
-      ...mediaUrls,
-    ];
-
-    // Save updated reports
-    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
+    // Update report with new media URLs using Supabase
+    await updateReportMedia(id, type, mediaUrls);
 
     return NextResponse.json({ 
       message: "Media files uploaded successfully",
@@ -92,11 +85,11 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const reports = getAllReports();
-    const report = reports.find((r) => r.id === params.id);
+    const { id } = await params;
+    const report = await getReportById(id);
 
     if (!report) {
       return NextResponse.json(
