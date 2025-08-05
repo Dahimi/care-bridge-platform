@@ -25,7 +25,7 @@ export function Sidebar() {
   return (
     <div className="flex h-full w-[200px] flex-col bg-muted/30">
       <div className="flex h-14 items-center border-b px-4">
-        <h2 className="text-lg font-semibold">War Child</h2>
+        <h2 className="text-lg font-semibold">War Child Care Bridge Platform</h2>
       </div>
       <nav className="flex-1 space-y-1 p-2">
         {navigation.map((item) => {
