@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Report } from "@/types";
 import { ClipboardList, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 

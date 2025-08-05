@@ -56,19 +56,6 @@ export function StatusUpdate({ reportId, currentStatus }: StatusUpdateProps) {
     }
   };
 
-  const getStatusVariant = (status: ReportStatus) => {
-    switch (status) {
-      case "new":
-        return "default";
-      case "in_review":
-        return "secondary";
-      case "completed":
-        return "success";
-      default:
-        return "default";
-    }
-  };
-
   return (
     <Card className="p-4">
       <h3 className="text-lg font-semibold mb-4">Update Report Status</h3>

@@ -41,7 +41,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
               ? "default"
               : report.status === "in_review"
               ? "secondary"
-              : "success"
+              : "outline"
           }
           className="text-sm"
         >

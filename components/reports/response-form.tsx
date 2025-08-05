@@ -74,8 +74,8 @@ export function ReportResponseForm({
         },
         body: JSON.stringify({ status }),
       });
-    } catch (error) {
-      console.error("Failed to update report status:", error);
+    } catch (err) {
+      console.error("Failed to update report status:", err);
     }
   };
 
@@ -119,7 +119,8 @@ export function ReportResponseForm({
 
       // Refresh the page to show updated status
       router.refresh();
-    } catch (error) {
+    } catch (err) {
+      console.error("Error submitting response:", err);
       toast.error("Error", {
         description: "Failed to submit response. Please try again.",
       });
@@ -134,7 +135,8 @@ export function ReportResponseForm({
       await updateReportStatus("in_review");
       toast.success("Report marked as in review");
       router.refresh();
-    } catch (error) {
+    } catch (err) {
+      console.error("Failed to update status:", err);
       toast.error("Failed to update status");
     }
   };
@@ -147,7 +149,7 @@ export function ReportResponseForm({
             <div>
               <h3 className="font-medium">Start Working on This Report</h3>
               <p className="text-sm text-muted-foreground">
-                Mark this report as "in review" to let others know you're working on it.
+                Mark this report as &ldquo;in review&rdquo; to let others know you&apos;re working on it.
               </p>
             </div>
             <Button onClick={handleStartReview} variant="outline">

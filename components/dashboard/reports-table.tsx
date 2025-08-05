@@ -49,7 +49,7 @@ export function ReportsTable({ reports }: ReportsTableProps) {
                     report.assessment_data.severity_score >= 7
                       ? "destructive"
                       : report.assessment_data.severity_score >= 5
-                      ? "warning"
+                      ? "secondary"
                       : "default"
                   }
                 >
@@ -63,7 +63,7 @@ export function ReportsTable({ reports }: ReportsTableProps) {
                       ? "default"
                       : report.status === "in_review"
                       ? "secondary"
-                      : "success"
+                      : "outline"
                   }
                 >
                   {report.status}

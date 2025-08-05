@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Report } from "@/types";
 import { getAllReports, createReport } from "@/lib/supabase-db";
 
 export async function GET() {
